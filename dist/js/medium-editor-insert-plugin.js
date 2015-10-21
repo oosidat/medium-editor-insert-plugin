@@ -1567,35 +1567,71 @@ this["MediumInsert"]["Templates"]["src/js/templates/images-toolbar.hbs"] = Handl
      */
 
     Images.prototype.add = function () {
-        var that = this,
-            $file = $(this.templates['src/js/templates/images-fileupload.hbs']()),
-            fileUploadOptions = {
-                dataType: 'json',
-                add: function (e, data) {
-                    $.proxy(that, 'uploadAdd', e, data)();
-                },
-                done: function (e, data) {
-                    $.proxy(that, 'uploadDone', e, data)();
-                }
+        var that = this;
+
+        if (that.options.customUploadAction) {
+            var callback = function(result) {
+                $.proxy(that, 'insertUploadedImage', result, {})();
             };
 
-        // Only add progress callbacks for browsers that support XHR2,
-        // and test for XHR2 per:
-        // http://stackoverflow.com/questions/6767887/
-        // what-is-the-best-way-to-check-for-xhr2-file-upload-support
-        if (new XMLHttpRequest().upload) {
-            fileUploadOptions.progress = function (e, data) {
-                $.proxy(that, 'uploadProgress', e, data)();
-            };
+            that.options.customUploadAction({opts: callback});
 
-            fileUploadOptions.progressall = function (e, data) {
-                $.proxy(that, 'uploadProgressall', e, data)();
-            };
+        } else {
+
+            var $file = $(this.templates['src/js/templates/images-fileupload.hbs']()),
+                fileUploadOptions = {
+                    dataType: 'json',
+                    add: function (e, data) {
+                        $.proxy(that, 'uploadAdd', e, data)();
+                    },
+                    done: function (e, data) {
+                        $.proxy(that, 'uploadDone', e, data)();
+                    }
+                };
+
+            // Only add progress callbacks for browsers that support XHR2,
+            // and test for XHR2 per:
+            // http://stackoverflow.com/questions/6767887/
+            // what-is-the-best-way-to-check-for-xhr2-file-upload-support
+            if (new XMLHttpRequest().upload) {
+                fileUploadOptions.progress = function (e, data) {
+                    $.proxy(that, 'uploadProgress', e, data)();
+                };
+
+                fileUploadOptions.progressall = function (e, data) {
+                    $.proxy(that, 'uploadProgressall', e, data)();
+                };
+            }
+
+            $file.fileupload($.extend(true, {}, this.options.fileUploadOptions, fileUploadOptions));
+            $file.click();
         }
 
-        $file.fileupload($.extend(true, {}, this.options.fileUploadOptions, fileUploadOptions));
+    };
 
-        $file.click();
+    /**
+     * Insert the uploaded image using the provided image link
+     *
+     * @param {string} img
+     * @return {void}
+     */
+
+    Images.prototype.insertUploadedImage = function (img) {
+        var $place = this.$el.find('.medium-insert-active'),
+            that = this;
+
+        this.core.hideButtons();
+
+        // Replace paragraph with div, because figure elements can't be inside paragraph
+        if ($place.is('p')) {
+            $place.replaceWith('<div class="medium-insert-active">'+ $place.html() +'</div>');
+            $place = this.$el.find('.medium-insert-active');
+            this.core.moveCaret($place);
+        }
+
+        $place.addClass('medium-insert-images');
+
+        $.proxy(that, 'showImage', img, {})();
     };
 
     /**
