@@ -1521,6 +1521,7 @@ this["MediumInsert"]["Templates"]["src/js/templates/images-toolbar.hbs"] = Handl
             .on('click', '.medium-insert-images-toolbar2 .medium-editor-action', $.proxy(this, 'toolbar2Action'));
 
         this.$el
+            .on('click', $.proxy(this, 'unselectImage'))
             .on('click', '.medium-insert-images img', $.proxy(this, 'selectImage'));
     };
 
